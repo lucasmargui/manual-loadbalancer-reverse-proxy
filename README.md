@@ -173,6 +173,8 @@ For development without a public DNS, edit your hosts file:
 127.0.0.1 module2.main-domain-example.online
 
 ```
+<img width="426" height="106" alt="image" src="https://github.com/user-attachments/assets/28a7aaee-58a1-4e59-9614-d24a50032478" />
+
 - Enables multi-subdomain testing on a single local machine
 - Works seamlessly with Docker networking
 
