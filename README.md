@@ -1,1 +1,2 @@
-# nginx-reverse-proxy
+# 📘 README — NGINX Redirect Image
+

@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  nginx-proxy:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certificates:/etc/letsencrypt
+    depends_on:
+      - main-domain-server
+      - module1-main-domain-server
+      - module2-main-domain-server
+
+  main-domain-server:
+    image: httpd:latest
+    container_name: main-domain-server
+    restart: always
+    volumes:
+      - ./main:/usr/local/apache2/htdocs/
+
+  module1-main-domain-server:
+    image: httpd:latest
+    container_name: module1-main-domain-server
+    restart: always
+    volumes:
+      - ./example-module1/module1:/usr/local/apache2/htdocs/
+
+  module2-main-domain-server:
+    image: httpd:latest
+    container_name: module2-main-domain-server
+    restart: always
+    volumes:
+      - ./example-module2/module2:/usr/local/apache2/htdocs/
