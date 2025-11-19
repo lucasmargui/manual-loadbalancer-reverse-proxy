@@ -89,14 +89,15 @@ services:
     container_name: module1-main-domain-server
     restart: always
     volumes:
-      - ./example-module1/module1:/usr/local/apache2/htdocs/
+      - ./example-module1:/usr/local/apache2/htdocs/
 
   module2-main-domain-server:
     image: httpd:latest
     container_name: module2-main-domain-server
     restart: always
     volumes:
-      - ./example-module2/module2:/usr/local/apache2/htdocs/
+      - ./example-module2:/usr/local/apache2/htdocs/
+
 
 ```
 
