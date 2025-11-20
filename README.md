@@ -6,7 +6,6 @@ Advanced Nginx reverse proxy architecture for multi-service Docker environments,
 
 This section explains how to configure Nginx to act as a **reverse proxy** and **load balancer** for multiple Docker services.
 
-<details><summary> Show details! </summary>
 
 ## Table of Contents
 
@@ -298,13 +297,8 @@ This flow can be extended for:
 
 This architecture is production-ready, highly maintainable, and extensible for microservices, modular applications, or multi-tenant hosting environments.
 
-</details>
 
----
 
-## Kubernetes like - Reverse Proxy + Load Balancer
 
-This project demonstrates a professional multi-module web setup with load balancing and dynamic reverse proxy using Docker Compose, inspired by Kubernetes orchestration patterns.
 
-Dynamic Nginx Proxy (jwilder/nginx-proxy) to automatically route HTTP/HTTPS traffic.
 
