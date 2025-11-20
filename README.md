@@ -281,8 +281,7 @@ This flow can be extended for:
     - `http://module1.main-domain-example.online`
     - `http://module2.main-domain-example.online`
   
-   <img width="1308" height="400" alt="image" src="https://github.com/user-attachments/assets/e2a85dae-2fb4-4956-92a6-ab387b18fefb" />
-
+  <img width="1377" height="313" alt="image" src="https://github.com/user-attachments/assets/f1757db5-02cb-4677-b106-03451130ad07" />
 
 --- 
   
