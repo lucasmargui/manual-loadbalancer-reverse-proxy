@@ -1,5 +1,9 @@
 version: "3.9"
 
+networks:
+  webnet:
+    driver: bridge
+
 services:
   nginx-proxy:
     image: nginx:latest
@@ -12,27 +16,65 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certificates:/etc/letsencrypt
     depends_on:
-      - main-domain-server
-      - module1-main-domain-server
-      - module2-main-domain-server
+      - module1-server
+      - module2-server
+      - module3-server
+    networks:
+      - webnet
 
-  main-domain-server:
+  
+  module1-server-1:
     image: httpd:latest
-    container_name: main-domain-server
-    restart: always
-    volumes:
-      - ./main:/usr/local/apache2/htdocs/
-
-  module1-main-domain-server:
-    image: httpd:latest
-    container_name: module1-main-domain-server
+    container_name: module1-server-1
     restart: always
     volumes:
       - ./example-module1:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
 
-  module2-main-domain-server:
+  module1-server-2:
     image: httpd:latest
-    container_name: module2-main-domain-server
+    container_name: module1-server-2
+    restart: always
+    volumes:
+      - ./example-module1:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+
+  module2-server-1:
+    image: httpd:latest
+    container_name: module2-server-1
     restart: always
     volumes:
       - ./example-module2:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+  module2-server-2:
+    image: httpd:latest
+    container_name: module2-server-2
+    restart: always
+    volumes:
+      - ./example-module2:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+ 
+  module3-server-1:
+    image: httpd:latest
+    container_name: module3-server-1
+    restart: always
+    volumes:
+      - ./example-module3:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+  module3-server-2:
+    image: httpd:latest
+    container_name: module3-server-2
+    restart: always
+    volumes:
+      - ./example-module3:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
