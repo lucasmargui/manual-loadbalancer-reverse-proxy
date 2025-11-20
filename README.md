@@ -1,69 +1,69 @@
-# Nginx Reverse Proxy Setup with Docker
+# Nginx Reverse Proxy Setup with Docker 
 
-Advanced Nginx reverse proxy architecture for multi-service Docker environments, optimized for maintainability, scalability, and local development.
+A modern, modular, production-ready architecture for running **Nginx as a reverse proxy and load balancer** for multiple containerized services using Docker.
 
-## Manual Load Balancer + Reverse Proxy 
-
-This section explains how to configure Nginx to act as a **reverse proxy** and **load balancer** for multiple Docker services.
-
-
-## Table of Contents
-
-- [Overview](#overview)  
-- [Architecture](#architecture)  
-- [Docker Compose Architecture](#docker-compose-architecture)  
-- [Nginx Configuration](#nginx-configuration)  
-- [Local Testing with Hosts](#local-domain-simulation)  
-- [Request Flow](#request-flow)  
-- [Getting Started](#getting-started)  
-- [Best Practices & Notes](#best-practices--notes)  
+This improved documentation brings:
+- Clearer architecture diagrams
+- Detailed request flow
+- Enhanced explanations for routing, proxying and load balancing
+- Optimized folder structure and best practices
+- Step-by-step local testing instructions
 
 ---
 
-## Overview
-
-A **reverse proxy** acts as the gateway for client requests, routing traffic to the appropriate backend service. This setup provides:
-
-- Multi-domain hosting on a single public IP
-- Centralized SSL/TLS management
-- Load balancing, caching, and security
-- Containerized service isolation
-
-### Services in this setup:
-- nginx-proxy: central reverse proxy
-- main-domain-server, module1-server, module2-server: backend HTTP services (Apache)
-- Local hosts simulate domains/subdomains for development/testing
+## 📌 Table of Contents
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Docker Compose Architecture](#docker-compose-architecture)
+- [Nginx Configuration](#nginx-configuration)
+- [Local Domain Simulation](#local-domain-simulation)
+- [Request Flow](#request-flow)
+- [Getting Started](#getting-started)
+- [Best Practices](#best-practices)
 
 ---
 
-## Architecture
+## 🧭 Overview
 
-```arduino
-               +------------------+
-               |  nginx-proxy     |
-               |  (Reverse Proxy) |  
-               +--------+---------+
-                        |
-    ---------------------------------------------------
-    |                     |                           |
-+---------------+        +----------------+        +----------------+
-| module1       |        | module2        |        | module3        |
-| module1-server|        | module2-server |        | module3-server |
-+---------------+        +----------------+        +----------------+
+The goal of this setup is to allow multiple independent modules (microservices, subdomains, or project sections) to run behind a **single Nginx reverse proxy**, while maintaining:
 
+- Multi-domain/subdomain routing
+- Clean project isolation
+- Scalable load balancing
+- Local development simulation of production behavior
+- SSL readiness (Let’s Encrypt compatible)
+
+### Components
+- **nginx-proxy** → Reverse proxy router + load balancer
+- **module1 / module2 / module3 servers** → Apache-based backend services
+- **Local domains** → For easy routing during development
+
+---
+
+## 🏗 Architecture
+```
+                     +----------------------+
+                     |     nginx-proxy      |
+                     |  (Reverse Proxy LB)  |
+                     +----------+-----------+
+                                |
+              -------------------------------------------
+              |                    |                     |
+      +---------------+   +----------------+   +----------------+
+      | module1       |   | module2        |   | module3        |
+      | Load Balanced |   | Load Balanced  |   | Load Balanced  |
+      +---------------+   +----------------+   +----------------+
 ```
 
-- All services are Dockerized
-- Nginx dynamically routes requests based on Host headers
-- Backend containers serve isolated content for each domain/subdomai
+Each module contains **two backend servers**, providing fault tolerance and horizontal scalability.
 
---- 
+Nginx receives all traffic and distributes incoming requests to the correct backend.
 
-## Docker Compose Architecture
+---
 
-`docker-compose.yml` defines isolated services with volume mounting for content:
+## 📦 Docker Compose Architecture
 
-```
+```yaml
 version: "3.9"
 
 networks:
@@ -71,6 +71,9 @@ networks:
     driver: bridge
 
 services:
+  ################################
+  # Reverse Proxy (Nginx)
+  ################################
   nginx-proxy:
     image: nginx:latest
     container_name: nginx-proxy
@@ -82,16 +85,20 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certificates:/etc/letsencrypt
     depends_on:
-      - module1-server
-      - module2-server
-      - module3-server
+      - module1-server-1
+      - module1-server-2
+      - module2-server-1
+      - module2-server-2
+      - module3-server-1
+      - module3-server-2
     networks:
       - webnet
 
-  
+  ################################
+  # Module 1 (Apache Servers)
+  ################################
   module1-server-1:
     image: httpd:latest
-    container_name: module1-server-1
     restart: always
     volumes:
       - ./example-module1:/usr/local/apache2/htdocs/
@@ -100,17 +107,17 @@ services:
 
   module1-server-2:
     image: httpd:latest
-    container_name: module1-server-2
     restart: always
     volumes:
       - ./example-module1:/usr/local/apache2/htdocs/
     networks:
       - webnet
 
-
+  ################################
+  # Module 2
+  ################################
   module2-server-1:
     image: httpd:latest
-    container_name: module2-server-1
     restart: always
     volumes:
       - ./example-module2:/usr/local/apache2/htdocs/
@@ -119,17 +126,17 @@ services:
 
   module2-server-2:
     image: httpd:latest
-    container_name: module2-server-2
     restart: always
     volumes:
       - ./example-module2:/usr/local/apache2/htdocs/
     networks:
       - webnet
 
- 
+  ################################
+  # Module 3
+  ################################
   module3-server-1:
     image: httpd:latest
-    container_name: module3-server-1
     restart: always
     volumes:
       - ./example-module3:/usr/local/apache2/htdocs/
@@ -138,28 +145,28 @@ services:
 
   module3-server-2:
     image: httpd:latest
-    container_name: module3-server-2
     restart: always
     volumes:
       - ./example-module3:/usr/local/apache2/htdocs/
     networks:
       - webnet
-
-
 ```
 
-- depends_on ensures backend services start before Nginx
-- Apache serves static content via mounted volumes
-- Volumes make local development iterative and fast
+### Notes
+- Each module has **two replicas** for load balancing.
+- Code is mounted locally for real-time development.
+- `depends_on` ensures backend readiness.
 
---- 
+---
 
-## Nginx Configuration
+## ⚙️ Nginx Configuration
 
-Reverse proxy configuration is modular: each server block corresponds to a domain/subdomain:
+Reverse proxy rules for each subdomain/module, including load balancing groups.
 
-```
+```nginx
+###########################
 # Module 1
+###########################
 upstream module1_backend {
     server module1-server-1:80;
     server module1-server-2:80;
@@ -178,7 +185,9 @@ server {
     }
 }
 
+###########################
 # Module 2
+###########################
 upstream module2_backend {
     server module2-server-1:80;
     server module2-server-2:80;
@@ -197,7 +206,9 @@ server {
     }
 }
 
+###########################
 # Module 3
+###########################
 upstream module3_backend {
     server module3-server-1:80;
     server module3-server-2:80;
@@ -215,90 +226,70 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-
 ```
 
+---
 
-- Maintains client IP and protocol headers for logging, security, and analytics-
-- Easy to extend with SSL, caching, or custom routing logic
-- Modular configuration allows adding new modules without downtime
+## 🖥 Local Domain Simulation
 
---- 
-
-## Local Domain Simulation
-
-For development without a public DNS, edit your hosts file:
+Edit your hosts file to simulate DNS:
 
 ```bash
-# Local test domains and subdomains for Nginx proxy
 127.0.0.1 main-domain-example.online
 127.0.0.1 module1.main-domain-example.online
 127.0.0.1 module2.main-domain-example.online
-
+127.0.0.1 module3.main-domain-example.online
 ```
-<img width="426" height="106" alt="image" src="https://github.com/user-attachments/assets/28a7aaee-58a1-4e59-9614-d24a50032478" />
 
-- Enables multi-subdomain testing on a single local machine
-- Works seamlessly with Docker networking
+This enables local testing EXACTLY like a production environment.
 
-### Request Flow
+---
 
-1. A client requests http://module1.main-domain-example.online
-2. Nginx checks the server_name in its configuration
-3. The request is forwarded to module1-main-domain-server container
-4. Apache inside the container serves the content
-5. Response is sent back through Nginx to the client
+## 🔄 Request Flow (Step-by-Step)
 
-This flow can be extended for:
-- SSL termination (letsencrypt/certbot)
-- Load balancing (round-robin, least connections)
-- Caching static assets for performance
+1. User accesses: `http://module1.main-domain-example.online`
+2. Hosts file resolves to local machine (127.0.0.1)
+3. Request hits **nginx-proxy**
+4. Nginx reads `server_name` and selects the correct block
+5. Nginx forwards the request to the correct upstream group:
+   → `module1_backend`
+6. Load balancer chooses one backend container (round-robin)
+7. Apache inside the module container serves the file
+8. Response returns:
+   backend → nginx-proxy → browser
 
---- 
+---
 
-## Getting Started
+## 🚀 Getting Started
 
-1. Clone the repository
-   ```
-    git clone <repo-url>
-    cd <repo-directory>
-   ```
-3. Build and start containers:
-   ```
-   docker compose up -d
-   ```
-4. Edit `/etc/hosts` (or `C:\Windows\System32\drivers\etc\hosts` on Windows) with test domains
+### 1. Clone the repository
+```bash
+git clone <repo-url>
+cd <repo-directory>
+```
 
-  ```bash
-  127.0.0.1 main-domain-example.online
-  127.0.0.1 module1.main-domain-example.online
-  127.0.0.1 module2.main-domain-example.online
-  ```
+### 2. Start the stack
+```bash
+docker compose up -d
+```
 
-6. Open your browser and access:
-   
-    - `http://main-domain-example.online`
-    - `http://module1.main-domain-example.online`
-    - `http://module2.main-domain-example.online`
-  
-  <img width="1377" height="313" alt="image" src="https://github.com/user-attachments/assets/f1757db5-02cb-4677-b106-03451130ad07" />
+### 3. Configure test domains
+Update your OS hosts file with module domains.
 
---- 
-  
-## Best Practices & Notes
+### 4. Test in browser
+- http://module1.main-domain-example.online
+- http://module2.main-domain-example.online
+- http://module3.main-domain-example.online
 
-- Use named Docker networks for isolation and explicit container communication
-- Prefer environment variables for dynamic backend URLs
-- Version control your Nginx configuration for rollback and audit
-- Consider Docker healthchecks for backend containers to ensure Nginx only forwards to healthy services
-- For production, combine with HTTPS, rate limiting, and caching strategies
+---
 
---- 
+## ✅ Best Practices
+- Use named Docker networks for clean isolation
+- Mount volumes for fast development iteration
+- Keep Nginx configs modular
+- Add health checks to ensure Nginx avoids unhealthy containers
+- Use Let's Encrypt for SSL termination
+- Use caching for high performance
 
-This architecture is production-ready, highly maintainable, and extensible for microservices, modular applications, or multi-tenant hosting environments.
-
-
-
-
-
+---
 
