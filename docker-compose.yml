@@ -5,80 +5,77 @@ networks:
     driver: bridge
 
 services:
-  # Nginx Proxy Dinâmico 
   nginx-proxy:
-    image: jwilder/nginx-proxy:latest
+    image: nginx:latest
     container_name: nginx-proxy
     restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certificates:/etc/nginx/certs:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - webnet
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certificates:/etc/letsencrypt
     depends_on:
       - module1-server
       - module2-server
       - module3-server
+    networks:
+      - webnet
 
-  ########################################
-  # Module 1 Backend
-  ########################################
-  module1-server:
+  
+  module1-server-1:
     image: httpd:latest
+    container_name: module1-server-1
     restart: always
     volumes:
       - ./example-module1:/usr/local/apache2/htdocs/
     networks:
       - webnet
-    environment:
-      - VIRTUAL_HOST=module1.main-domain-example.online
-    deploy:
-      replicas: 2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
-  ########################################
-  # Module 2 Backend
-  ########################################
-  module2-server:
+  module1-server-2:
     image: httpd:latest
+    container_name: module1-server-2
+    restart: always
+    volumes:
+      - ./example-module1:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+
+  module2-server-1:
+    image: httpd:latest
+    container_name: module2-server-1
     restart: always
     volumes:
       - ./example-module2:/usr/local/apache2/htdocs/
     networks:
       - webnet
-    environment:
-      - VIRTUAL_HOST=module2.main-domain-example.online
-    deploy:
-      replicas: 2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
-  ########################################
-  # Module 3 Backend
-  ########################################
-  module3-server:
+  module2-server-2:
     image: httpd:latest
+    container_name: module2-server-2
+    restart: always
+    volumes:
+      - ./example-module2:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+ 
+  module3-server-1:
+    image: httpd:latest
+    container_name: module3-server-1
     restart: always
     volumes:
       - ./example-module3:/usr/local/apache2/htdocs/
     networks:
       - webnet
-    environment:
-      - VIRTUAL_HOST=module3.main-domain-example.online
-    deploy:
-      replicas: 2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+
+  module3-server-2:
+    image: httpd:latest
+    container_name: module3-server-2
+    restart: always
+    volumes:
+      - ./example-module3:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
