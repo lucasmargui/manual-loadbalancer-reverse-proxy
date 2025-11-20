@@ -2,7 +2,7 @@
 
 Advanced Nginx reverse proxy architecture for multi-service Docker environments, optimized for maintainability, scalability, and local development.
 
-## Manual - Reverse Proxy + Load Balancer
+## Manual Load Balancer + Reverse Proxy 
 
 This section explains how to configure Nginx to act as a **reverse proxy** and **load balancer** for multiple Docker services.
 
