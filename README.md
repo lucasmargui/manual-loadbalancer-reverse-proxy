@@ -2,10 +2,10 @@
 
 Advanced Nginx reverse proxy architecture for multi-service Docker environments, optimized for maintainability, scalability, and local development.
 
+## Manual Load Balancer + Reverse Proxy 
 
-## Manual - Reverse Proxy + Load Balancer
+This section explains how to configure Nginx to act as a **reverse proxy** and **load balancer** for multiple Docker services.
 
-<details><summary> Show details! </summary>
 
 ## Table of Contents
 
@@ -38,7 +38,7 @@ A **reverse proxy** acts as the gateway for client requests, routing traffic to 
 
 ## Architecture
 
-```shell
+```arduino
                +------------------+
                |  nginx-proxy     |
                |  (Reverse Proxy) |  
@@ -46,10 +46,10 @@ A **reverse proxy** acts as the gateway for client requests, routing traffic to 
                         |
     ---------------------------------------------------
     |                     |                           |
-+-------------+      +----------------+        +----------------+
-| main-domain |      | module1        |        | module2        |
-| server      |      | module1-server |        | module2-server |
-+-------------+      +----------------+        +----------------+
++---------------+        +----------------+        +----------------+
+| module1       |        | module2        |        | module3        |
+| module1-server|        | module2-server |        | module3-server |
++---------------+        +----------------+        +----------------+
 
 ```
 
@@ -265,7 +265,7 @@ This flow can be extended for:
    ```
 3. Build and start containers:
    ```
-   docker-compose up -d
+   docker compose up -d
    ```
 4. Edit `/etc/hosts` (or `C:\Windows\System32\drivers\etc\hosts` on Windows) with test domains
 
@@ -297,6 +297,8 @@ This flow can be extended for:
 
 This architecture is production-ready, highly maintainable, and extensible for microservices, modular applications, or multi-tenant hosting environments.
 
-</details>
 
----
+
+
+
+
