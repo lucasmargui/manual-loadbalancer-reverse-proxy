@@ -2,6 +2,11 @@
 
 Advanced Nginx reverse proxy architecture for multi-service Docker environments, optimized for maintainability, scalability, and local development.
 
+
+## Manual - Reverse Proxy + Load Balancer
+
+<details><summary> Show details! </summary>
+
 ## Table of Contents
 
 - [Overview](#overview)  
@@ -61,6 +66,10 @@ A **reverse proxy** acts as the gateway for client requests, routing traffic to 
 ```
 version: "3.9"
 
+networks:
+  webnet:
+    driver: bridge
+
 services:
   nginx-proxy:
     image: nginx:latest
@@ -73,30 +82,68 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certificates:/etc/letsencrypt
     depends_on:
-      - main-domain-server
-      - module1-main-domain-server
-      - module2-main-domain-server
+      - module1-server
+      - module2-server
+      - module3-server
+    networks:
+      - webnet
 
-  main-domain-server:
+  
+  module1-server-1:
     image: httpd:latest
-    container_name: main-domain-server
-    restart: always
-    volumes:
-      - ./main:/usr/local/apache2/htdocs/
-
-  module1-main-domain-server:
-    image: httpd:latest
-    container_name: module1-main-domain-server
+    container_name: module1-server-1
     restart: always
     volumes:
       - ./example-module1:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
 
-  module2-main-domain-server:
+  module1-server-2:
     image: httpd:latest
-    container_name: module2-main-domain-server
+    container_name: module1-server-2
+    restart: always
+    volumes:
+      - ./example-module1:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+
+  module2-server-1:
+    image: httpd:latest
+    container_name: module2-server-1
     restart: always
     volumes:
       - ./example-module2:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+  module2-server-2:
+    image: httpd:latest
+    container_name: module2-server-2
+    restart: always
+    volumes:
+      - ./example-module2:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+ 
+  module3-server-1:
+    image: httpd:latest
+    container_name: module3-server-1
+    restart: always
+    volumes:
+      - ./example-module3:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
+
+  module3-server-2:
+    image: httpd:latest
+    container_name: module3-server-2
+    restart: always
+    volumes:
+      - ./example-module3:/usr/local/apache2/htdocs/
+    networks:
+      - webnet
 
 
 ```
@@ -112,18 +159,10 @@ services:
 Reverse proxy configuration is modular: each server block corresponds to a domain/subdomain:
 
 ```
-server {
-    listen 80;
-    server_name main-domain-example.online;
-
-    location / {
-        proxy_pass http://main-domain-server:80;
-
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+# Module 1
+upstream module1_backend {
+    server module1-server-1:80;
+    server module1-server-2:80;
 }
 
 server {
@@ -131,8 +170,7 @@ server {
     server_name module1.main-domain-example.online;
 
     location / {
-        proxy_pass http://module1-main-domain-server:80;
-
+        proxy_pass http://module1_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -140,13 +178,37 @@ server {
     }
 }
 
+# Module 2
+upstream module2_backend {
+    server module2-server-1:80;
+    server module2-server-2:80;
+}
+
 server {
     listen 80;
     server_name module2.main-domain-example.online;
 
     location / {
-        proxy_pass http://module2-main-domain-server:80;
+        proxy_pass http://module2_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
 
+# Module 3
+upstream module3_backend {
+    server module3-server-1:80;
+    server module3-server-2:80;
+}
+
+server {
+    listen 80;
+    server_name module3.main-domain-example.online;
+
+    location / {
+        proxy_pass http://module3_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -235,3 +297,7 @@ This flow can be extended for:
 --- 
 
 This architecture is production-ready, highly maintainable, and extensible for microservices, modular applications, or multi-tenant hosting environments.
+
+</details>
+
+---
