@@ -2,8 +2,9 @@
 
 Advanced Nginx reverse proxy architecture for multi-service Docker environments, optimized for maintainability, scalability, and local development.
 
-
 ## Manual - Reverse Proxy + Load Balancer
+
+This section explains how to configure Nginx to act as a **reverse proxy** and **load balancer** for multiple Docker services.
 
 <details><summary> Show details! </summary>
 
@@ -38,7 +39,7 @@ A **reverse proxy** acts as the gateway for client requests, routing traffic to 
 
 ## Architecture
 
-```shell
+```arduino
                +------------------+
                |  nginx-proxy     |
                |  (Reverse Proxy) |  
@@ -46,10 +47,10 @@ A **reverse proxy** acts as the gateway for client requests, routing traffic to 
                         |
     ---------------------------------------------------
     |                     |                           |
-+-------------+      +----------------+        +----------------+
-| main-domain |      | module1        |        | module2        |
-| server      |      | module1-server |        | module2-server |
-+-------------+      +----------------+        +----------------+
++---------------+        +----------------+        +----------------+
+| module1       |        | module2        |        | module3        |
+| module1-server|        | module2-server |        | module3-server |
++---------------+        +----------------+        +----------------+
 
 ```
 
@@ -300,3 +301,68 @@ This architecture is production-ready, highly maintainable, and extensible for m
 </details>
 
 ---
+
+## Kubernetes like - Reverse Proxy + Load Balancer
+
+This project demonstrates a professional multi-module web setup with load balancing and dynamic reverse proxy using Docker Compose, inspired by Kubernetes orchestration patterns.
+
+<details><summary> Show details! </summary>
+
+It uses:
+
+- Dynamic Nginx Proxy (jwilder/nginx-proxy) to automatically route HTTP/HTTPS traffic.
+- Multiple Apache (httpd) backend instances with replication, health checks, and isolated network.
+- Docker internal network to simulate Kubernetes Services for inter-service communication.
+
+
+### Architecture
+
+```arduino
+                 ┌─────────────────┐
+                 │ Nginx Proxy     │
+                 │ jwilder/nginx   │
+                 │ VIRTUAL_HOST    │
+                 └─────────┬───────┘
+                           │
+      ┌────────────────────┼─────────────────────┐
+      │                    │                     │
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ Module1 Server│    │ Module2 Server│    │ Module3 Server│
+│ (2 replicas)  │    │ (2 replicas)  │    │ (2 replicas)  │
+└───────────────┘    └───────────────┘    └───────────────┘
+
+```
+
+- Each module has 2 replicas, similar to replicated Pods in Kubernetes.
+- The nginx-proxy automatically detects active containers based on the VIRTUAL_HOST environment variable, acting like a Kubernetes Ingress Controller.
+- Health checks ensure traffic is only routed to healthy containers.
+
+
+### 1️⃣ Dynamic Nginx Proxy
+
+- Image: jwilder/nginx-proxy:latest
+- Function: acts as a reverse proxy, automatically detecting containers via Docker Socket.
+- Kubernetes equivalent: Ingress Controller distributing traffic to Services.
+
+-  Volumes:
+    -  SSL certificates (./certificates) for HTTPS.
+    -  Docker Socket (/var/run/docker.sock) to dynamically detect containers and hosts.
+
+### 2️⃣ Backend Modules (Module1, Module2, Module3)
+
+- Image: httpd:latest (Apache)
+- Volumes: website content (./example-moduleX)
+- Replication: deploy.replicas: 2 → similar to a Deployment with multiple replicas in Kubernetes.
+- Healthcheck: ensures only healthy containers receive traffic → equivalent to readiness/liveness probes in Kubernetes.
+- VIRTUAL_HOST: defines the domain/subdomain for each module → nginx-proxy automatically generates the proxy configuration.
+
+### Benefits of this Setup
+
+1. Scalability: Increase replicas for more instances easily.
+2. Resilience: Health checks prevent routing traffic to failing containers.
+3. Dynamic Proxy: No need to manually edit Nginx configuration.
+4. Kubernetes-like: Easily migratable to GCP GKE or any cluster, maintaining the same Deployment, Service, and Ingress logic.
+5. Module Isolation: Each module is independent and can have its own domain/subdomain.
+
+
+</details>
